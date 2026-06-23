@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ContentFlow - Document Manager</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+      padding: 30px;
+    }
+
+    header {
+      margin-bottom: 30px;
+      text-align: center;
+    }
+
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 2.5em;
+    }
+
+    .subtitle {
+      color: #666;
+      font-size: 1.1em;
+    }
+
+    .section {
+      margin-bottom: 40px;
+    }
+
+    .section h2 {
+      color: #333;
+      margin-bottom: 15px;
+      font-size: 1.5em;
+      border-bottom: 2px solid #667eea;
+      padding-bottom: 10px;
+    }
+
+    .upload-form {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      color: #333;
+      font-weight: 500;
+    }
+
+    input[type="text"],
+    textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-family: monospace;
+      font-size: 0.95em;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    input[type="text"]:focus,
+    textarea:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .button-group {
+      display: flex;
+      gap: 10px;
+    }
+
+    button {
+      flex: 1;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 5px;
+      font-size: 1em;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .btn-primary {
+      background: #667eea;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #5568d3;
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-secondary {
+      background: #f0f0f0;
+      color: #333;
+    }
+
+    .btn-secondary:hover {
+      background: #e0e0e0;
+    }
+
+    .btn-danger {
+      background: #ff6b6b;
+      color: white;
+      padding: 8px 16px;
+      font-size: 0.9em;
+      width: auto;
+      flex: none;
+    }
+
+    .btn-danger:hover {
+      background: #ff5252;
+    }
+
+    .search-box {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .search-box input {
+      flex: 1;
+    }
+
+    .search-box button {
+      flex: 0 0 120px;
+    }
+
+    .documents-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    .documents-table thead {
+      background: #f8f9fa;
+    }
+
+    .documents-table th {
+      padding: 12px;
+      text-align: left;
+      color: #333;
+      font-weight: 600;
+      border-bottom: 2px solid #ddd;
+    }
+
+    .documents-table td {
+      padding: 12px;
+      border-bottom: 1px solid #ddd;
+      color: #666;
+    }
+
+    .documents-table tr:hover {
+      background: #f8f9fa;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: #999;
+    }
+
+    .message {
+      padding: 12px;
+      border-radius: 5px;
+      margin-bottom: 15px;
+      animation: slideIn 0.3s;
+    }
+
+    .message.success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .message.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .stat {
+      display: inline-block;
+      margin-right: 20px;
+      font-size: 0.9em;
+      color: #666;
+    }
+
+    .stat-value {
+      font-weight: 600;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>📄 ContentFlow</h1>
+      <p class="subtitle">Smart Text Document Manager</p>
+    </header>
+
+    <!-- Messages -->
+    <div id="messages"></div>
+
+    <!-- Upload Section -->
+    <div class="section">
+      <h2>📤 Upload Document</h2>
+      <div class="upload-form">
+        <form id="uploadForm">
+          <div class="form-group">
+            <label for="filename">Filename (must end with .txt)</label>
+            <input type="text" id="filename" placeholder="e.g., my-document.txt" required>
+          </div>
+          <div class="form-group">
+            <label for="content">Document Content</label>
+            <textarea id="content" placeholder="Paste your text here..." required></textarea>
+          </div>
+          <div class="button-group">
+            <button type="submit" class="btn-primary">Upload Document</button>
+            <button type="reset" class="btn-secondary">Clear</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Search Section -->
+    <div class="section">
+      <h2>🔍 Search Documents</h2>
+      <div class="search-box">
+        <input type="text" id="searchQuery" placeholder="Search by filename or content...">
+        <button class="btn-primary" onclick="searchDocuments()">Search</button>
+      </div>
+    </div>
+
+    <!-- Documents Section -->
+    <div class="section">
+      <h2>📚 Your Documents</h2>
+      <div id="stats"></div>
+      <div id="documentsContainer"></div>
+    </div>
+  </div>
+
+  <script>
+    // Load documents on page load
+    document.addEventListener('DOMContentLoaded', loadDocuments);
+
+    // Upload form submission
+    document.getElementById('uploadForm').addEventListener('submit', handleUpload);
+
+    // Allow Enter key in search
+    document.getElementById('searchQuery').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') searchDocuments();
+    });
+
+    async function handleUpload(e) {
+      e.preventDefault();
+
+      const filename = document.getElementById('filename').value;
+      const content = document.getElementById('content').value;
+
+      if (!filename.endsWith('.txt')) {
+        showMessage('Filename must end with .txt', 'error');
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/documents/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ filename, content }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          showMessage(data.error, 'error');
+          return;
+        }
+
+        showMessage(`✓ Uploaded: ${filename}`, 'success');
+        document.getElementById('uploadForm').reset();
+        loadDocuments();
+      } catch (err) {
+        showMessage('Error: ' + err.message, 'error');
+      }
+    }
+
+    async function loadDocuments() {
+      try {
+        const response = await fetch('/api/documents');
+        const data = await response.json();
+
+        const container = document.getElementById('documentsContainer');
+        const statsDiv = document.getElementById('stats');
+
+        if (data.count === 0) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <p>No documents yet</p>
+              <p>Upload one above to get started!</p>
+            </div>
+          `;
+          statsDiv.innerHTML = '';
+          return;
+        }
+
+        // Show stats
+        const totalWords = data.documents.reduce((sum, doc) => sum + doc.wordCount, 0);
+        statsDiv.innerHTML = `
+          <div>
+            <span class="stat"><span class="stat-value">${data.count}</span> Documents</span>
+            <span class="stat"><span class="stat-value">${totalWords.toLocaleString()}</span> Total Words</span>
+          </div>
+        `;
+
+        // Build table
+        let html = `
+          <table class="documents-table">
+            <thead>
+              <tr>
+                <th>Filename</th>
+                <th>Words</th>
+                <th>Lines</th>
+                <th>Size</th>
+                <th>Uploaded</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+
+        data.documents.forEach(doc => {
+          const date = new Date(doc.uploadedAt).toLocaleDateString();
+          const sizeKB = (doc.size / 1024).toFixed(2);
+
+          html += `
+            <tr>
+              <td><strong>${doc.filename}</strong></td>
+              <td>${doc.wordCount}</td>
+              <td>${doc.lineCount}</td>
+              <td>${sizeKB} KB</td>
+              <td>${date}</td>
+              <td>
+                <button class="btn-danger" onclick="viewDocument('${doc.id}')">View</button>
+                <button class="btn-danger" onclick="deleteDocument('${doc.id}', '${doc.filename}')">Delete</button>
+              </td>
+            </tr>
+          `;
+        });
+
+        html += '</tbody></table>';
+        container.innerHTML = html;
+      } catch (err) {
+        showMessage('Error loading documents: ' + err.message, 'error');
+      }
+    }
+
+    async function viewDocument(id) {
+      try {
+        const response = await fetch(`/api/documents/${id}`);
+        const data = await response.json();
+
+        alert(`
+📄 ${data.metadata.filename}
+
+Words: ${data.metadata.wordCount}
+Lines: ${data.metadata.lineCount}
+
+Content:
+${data.content.substring(0, 500)}${data.content.length > 500 ? '...' : ''}
+        `);
+      } catch (err) {
+        showMessage('Error viewing document: ' + err.message, 'error');
+      }
+    }
+
+    async function deleteDocument(id, filename) {
+      if (!confirm(`Delete "${filename}"?`)) return;
+
+      try {
+        const response = await fetch(`/api/documents/${id}`, { method: 'DELETE' });
+        const data = await response.json();
+
+        if (!response.ok) {
+          showMessage(data.error, 'error');
+          return;
+        }
+
+        showMessage(`✓ Deleted: ${filename}`, 'success');
+        loadDocuments();
+      } catch (err) {
+        showMessage('Error deleting document: ' + err.message, 'error');
+      }
+    }
+
+    async function searchDocuments() {
+      const query = document.getElementById('searchQuery').value;
+
+      if (!query.trim()) {
+        loadDocuments();
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/documents/search?q=${encodeURIComponent(query)}`);
+        const data = await response.json();
+
+        const container = document.getElementById('documentsContainer');
+        const statsDiv = document.getElementById('stats');
+
+        if (data.resultCount === 0) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <p>No results for "${query}"</p>
+            </div>
+          `;
+          statsDiv.innerHTML = `<div><span class="stat">Search: ${data.resultCount} Results</span></div>`;
+          return;
+        }
+
+        statsDiv.innerHTML = `<div><span class="stat">Search: <span class="stat-value">${data.resultCount}</span> Results</span></div>`;
+
+        let html = `
+          <table class="documents-table">
+            <thead>
+              <tr>
+                <th>Filename</th>
+                <th>Words</th>
+                <th>Match Type</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+
+        data.results.forEach(doc => {
+          html += `
+            <tr>
+              <td><strong>${doc.filename}</strong></td>
+              <td>${doc.wordCount}</td>
+              <td><span style="background: #e3f2fd; padding: 4px 8px; border-radius: 3px;">${doc.matchType}</span></td>
+              <td>
+                <button class="btn-danger" onclick="deleteDocument('${doc.id}', '${doc.filename}')">Delete</button>
+              </td>
+            </tr>
+          `;
+        });
+
+        html += '</tbody></table>';
+        container.innerHTML = html;
+      } catch (err) {
+        showMessage('Error searching: ' + err.message, 'error');
+      }
+    }
+
+    function showMessage(text, type) {
+      const div = document.createElement('div');
+      div.className = `message ${type}`;
+      div.textContent = text;
+      document.getElementById('messages').appendChild(div);
+
+      setTimeout(() => div.remove(), 4000);
+    }
+  </script>
+</body>
+</html>

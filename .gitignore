@@ -1,0 +1,9 @@
+﻿node_modules/
+.DS_Store
+*.log
+npm-debug.log*
+uploaded-documents/
+data/metadata.json
+.env
+.vscode/
+.idea/
